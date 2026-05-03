@@ -150,7 +150,7 @@ static void main_loop() {
 
 		if (curr_event->type == TYPE_CHOICE) {
 
-			// check which choice was selected
+			// check which choice was selected and change the state accordingly
 			int i = 0;
 
 			do {
@@ -165,13 +165,15 @@ static void main_loop() {
 
 			} while (curr_event[i].type == TYPE_CHOICE);
 
+		} else {
+
+			// simply move to the next event
+			curr_event++;
 		}
 
-		if (curr_event->type != TYPE_CHOICE) { // not an if-else, because the above conditional can change the state, requiring another check
+		if (curr_event->type != TYPE_CHOICE) {
 
-			// progress one step, potentially consuming multiple events
-			curr_event++;
-
+			// consume events
 			do {
 
 				switch (curr_event->type) {

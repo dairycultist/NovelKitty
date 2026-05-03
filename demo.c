@@ -4,6 +4,10 @@
 
 static Event the_forest[], pick_left[], pick_right[], the_end[];
 
+Event *get_start_events() {
+	return the_forest;
+}
+
 static Event the_forest[] = {
 	
 	{ TYPE_TEXT, "Hello!" },
@@ -52,7 +56,3 @@ static Event the_end[] = {
 	{ TYPE_SET_PERSON_RIGHT, 0 },
 	{ TYPE_TEXT_UNPASSABLE, "The end...?" }
 };
-
-Event *get_start_events() {
-	return the_forest;
-}
