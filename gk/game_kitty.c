@@ -32,6 +32,7 @@ static SDL_Texture *screen_buffer;
 
 static SDL_Texture *tex_font;
 static SDL_Texture *tex_textbox;
+static SDL_Texture *tex_choicebox;
 
 static void draw_texture(SDL_Texture *tex, int x, int y, int flip) {
 
@@ -142,47 +143,55 @@ static void main_loop() {
 	// trigger next event with mouse click
 	if (mouse_clicked && curr_event->type != TYPE_TEXT_UNPASSABLE) {
 
-		do {
+		if (curr_event->type == TYPE_CHOICE) {
 
-			curr_event++;
+			// TODO check which choice was selected
 
-			switch (curr_event->type) {
+		} else {
 
-				case TYPE_SET_PERSON_LEFT:
+			// progress one step, potentially consuming multiple events
+			do {
 
-					if (tex_person_left)
-						SDL_DestroyTexture(tex_person_left);
+				curr_event++;
 
-					if (curr_event->string)
-						tex_person_left = IMG_LoadTexture(renderer, curr_event->string);
-					else
-						tex_person_left = NULL;
-					break;
-				
-				case TYPE_SET_PERSON_RIGHT:
+				switch (curr_event->type) {
 
-					if (tex_person_right)
-						SDL_DestroyTexture(tex_person_right);
+					case TYPE_SET_PERSON_LEFT:
 
-					if (curr_event->string)
-						tex_person_right = IMG_LoadTexture(renderer, curr_event->string);
-					else
-						tex_person_right = NULL;
-					break;
+						if (tex_person_left)
+							SDL_DestroyTexture(tex_person_left);
 
-				case TYPE_SET_BACKGROUND:
+						if (curr_event->string)
+							tex_person_left = IMG_LoadTexture(renderer, curr_event->string);
+						else
+							tex_person_left = NULL;
+						break;
+					
+					case TYPE_SET_PERSON_RIGHT:
 
-					if (tex_background)
-						SDL_DestroyTexture(tex_background);
+						if (tex_person_right)
+							SDL_DestroyTexture(tex_person_right);
 
-					if (curr_event->string)
-						tex_background = IMG_LoadTexture(renderer, curr_event->string);
-					else
-						tex_background = NULL;
-					break;
-			}
+						if (curr_event->string)
+							tex_person_right = IMG_LoadTexture(renderer, curr_event->string);
+						else
+							tex_person_right = NULL;
+						break;
 
-		} while (curr_event->type != TYPE_NULL && curr_event->type != TYPE_TEXT && curr_event->type != TYPE_TEXT_UNPASSABLE);
+					case TYPE_SET_BACKGROUND:
+
+						if (tex_background)
+							SDL_DestroyTexture(tex_background);
+
+						if (curr_event->string)
+							tex_background = IMG_LoadTexture(renderer, curr_event->string);
+						else
+							tex_background = NULL;
+						break;
+				}
+
+			} while (curr_event->type != TYPE_NULL && curr_event->type != TYPE_TEXT && curr_event->type != TYPE_TEXT_UNPASSABLE && curr_event->type != TYPE_CHOICE);
+		}
 	}
 
 	// render
@@ -205,8 +214,29 @@ static void main_loop() {
 		draw_texture(tex_person_right, WIDTH - w, HEIGHT - h, 1);
 	}
 
-	draw_texture(tex_textbox, 0, 288, 0);
-	draw_string(curr_event->string, 8, 296);
+	if (curr_event->type == TYPE_CHOICE) {
+
+		int i = 0;
+
+		// render all choices
+		do {
+
+			draw_texture(tex_choicebox, 16, 96 + i * 36, 0);
+			draw_string(curr_event[i].string, 24, 104 + i * 36);
+
+			i++;
+
+		} while (curr_event[i].type == TYPE_CHOICE);
+
+		// render text following it
+		draw_texture(tex_textbox, 0, 288, 0);
+		draw_string(curr_event[i].string, 8, 296);
+
+	} else {
+
+		draw_texture(tex_textbox, 0, 288, 0);
+		draw_string(curr_event->string, 8, 296);
+	}
 
 	SDL_SetRenderTarget(renderer, NULL); 						// reset render target back to window
 	SDL_RenderCopy(renderer, screen_buffer, NULL, &letterbox); 	// render screen_buffer
@@ -255,6 +285,13 @@ int main(void) {
 
 	if (!tex_textbox) {
 		fprintf(stderr, "\x1b[31m[GameKitty] Could not read textbox texture\n\x1b[0m");
+		return 1;
+	}
+
+	tex_choicebox = IMG_LoadTexture(renderer, "assets/choicebox.png");
+
+	if (!tex_choicebox) {
+		fprintf(stderr, "\x1b[31m[GameKitty] Could not read choicebox texture\n\x1b[0m");
 		return 1;
 	}
 

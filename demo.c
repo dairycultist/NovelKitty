@@ -22,6 +22,10 @@ static Event test_scene[] = {
 
 	{ TYPE_TEXT, "RIGHT: same lmfao!! THAT'S SO\nCRAZY??" },
 
+	{ TYPE_CHOICE, "LEFT" },
+	{ TYPE_CHOICE, "RIGHT" },
+	{ TYPE_TEXT, "who is angrier?" },
+
 	{ TYPE_SET_BACKGROUND, 0 },
 	{ TYPE_SET_PERSON_LEFT, 0 },
 	{ TYPE_SET_PERSON_RIGHT, 0 },
