@@ -33,6 +33,7 @@ static SDL_Texture *screen_buffer;
 static SDL_Texture *tex_font;
 static SDL_Texture *tex_textbox;
 static SDL_Texture *tex_choicebox;
+static SDL_Texture *tex_choicebox_hovered;
 
 static void draw_texture(SDL_Texture *tex, int x, int y, int flip) {
 
@@ -140,14 +141,33 @@ static void main_loop() {
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); 			// clear screen_buffer to black
 	SDL_RenderClear(renderer);
 
-	// trigger next event with mouse click
+	//////////////////////////////////////////////////////////////
+
+	/*
+	 * progress events with mouse click
+	 */
 	if (mouse_clicked && curr_event->type != TYPE_TEXT_UNPASSABLE) {
 
 		if (curr_event->type == TYPE_CHOICE) {
 
-			// TODO check which choice was selected
+			// check which choice was selected
+			int i = 0;
 
-		} else {
+			do {
+
+				if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36) {
+
+					curr_event = curr_event[i].next_event;
+					break;
+				}
+
+				i++;
+
+			} while (curr_event[i].type == TYPE_CHOICE);
+
+		}
+
+		if (curr_event->type != TYPE_CHOICE) { // not an if-else, because the above conditional can change the state, requiring another check
 
 			// progress one step, potentially consuming multiple events
 			do {
@@ -194,7 +214,9 @@ static void main_loop() {
 		}
 	}
 
-	// render
+	/*
+	 * render
+	 */
 	if (tex_background)
 		draw_texture(tex_background, 0, 0, 0);
 
@@ -221,7 +243,10 @@ static void main_loop() {
 		// render all choices
 		do {
 
-			draw_texture(tex_choicebox, 16, 96 + i * 36, 0);
+			if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36)
+				draw_texture(tex_choicebox_hovered, 16, 96 + i * 36, 0);
+			else
+				draw_texture(tex_choicebox, 16, 96 + i * 36, 0);
 			draw_string(curr_event[i].string, 24, 104 + i * 36);
 
 			i++;
@@ -238,13 +263,15 @@ static void main_loop() {
 		draw_string(curr_event->string, 8, 296);
 	}
 
+	//////////////////////////////////////////////////////////////
+
 	SDL_SetRenderTarget(renderer, NULL); 						// reset render target back to window
 	SDL_RenderCopy(renderer, screen_buffer, NULL, &letterbox); 	// render screen_buffer
 	SDL_RenderPresent(renderer); 								// present rendered content to screen
 }
 
 /*
- * main logic
+ * initialization
  */
 int main(void) {
 
@@ -295,6 +322,13 @@ int main(void) {
 		return 1;
 	}
 
+	tex_choicebox_hovered = IMG_LoadTexture(renderer, "assets/choicebox_hovered.png");
+
+	if (!tex_choicebox_hovered) {
+		fprintf(stderr, "\x1b[31m[GameKitty] Could not read hovered choicebox texture\n\x1b[0m");
+		return 1;
+	}
+
 	printf("\n[GameKitty] Good to go!\n\n");
 
 	// init
@@ -307,6 +341,8 @@ int main(void) {
 
 	// SDL_DestroyTexture(tex_font);
 	// SDL_DestroyTexture(tex_textbox);
+	// SDL_DestroyTexture(tex_choicebox);
+	// SDL_DestroyTexture(tex_choicebox_hovered);
 
 	// SDL_DestroyRenderer(renderer);
 	// SDL_DestroyWindow(window);

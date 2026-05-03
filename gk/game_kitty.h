@@ -32,20 +32,24 @@
 #define TYPE_TEXT 0x01
 #define TYPE_TEXT_UNPASSABLE 0x02
 #define TYPE_CHOICE 0x03
-#define TYPE_SET_PERSON_LEFT 0x04
-#define TYPE_SET_PERSON_RIGHT 0x05
-#define TYPE_SET_BACKGROUND 0x06
+// #define TYPE_GOTO 0x04
+#define TYPE_SET_PERSON_LEFT 0x05
+#define TYPE_SET_PERSON_RIGHT 0x06
+#define TYPE_SET_BACKGROUND 0x07
 
-typedef struct {
+struct Event {
 
 	unsigned char type;
 	char *string;
-	// TODO for TYPE_CHOICE, have a pointer to a Scene
-	// TODO for TYPE_CHOICE, encode flag stuff
+	struct Event *next_event; // for TYPE_CHOICE and TYPE_GOTO
+
+	// TODO for TYPE_CHOICE/TYPE_GOTO, encode flag stuff
 	// - the flag (boolean) requirements for it to appear as a choice to select at all
 	// - the flags it sets/unsets by using it
 
-} Event;
+};
+
+typedef struct Event Event;
 
 // Flags let you create situations where you're only able to reach a scene after completing other scenes first.
 // It's not insanely powerful, but it allows for stories more complex than simple dialogue trees.
