@@ -2,7 +2,7 @@
 
 #include "gk/game_kitty.h"
 
-static Event the_forest[], pick_left[], pick_right[];
+static Event the_forest[], pick_left[], pick_right[], the_end[];
 
 static Event the_forest[] = {
 	
@@ -31,16 +31,26 @@ static Event the_forest[] = {
 
 static Event pick_left[] = {
 
-	{ TYPE_SET_BACKGROUND, 0 },
 	{ TYPE_SET_PERSON_RIGHT, 0 },
-	{ TYPE_TEXT_UNPASSABLE, "you picked left!" }
+	{ TYPE_TEXT, "you picked left!" },
+
+	{ TYPE_GOTO, 0, the_end }
 };
 
 static Event pick_right[] = {
 
+	{ TYPE_SET_PERSON_LEFT, 0 },
+	{ TYPE_TEXT, "you picked right!" },
+
+	{ TYPE_GOTO, 0, the_end }
+};
+
+static Event the_end[] = {
+
 	{ TYPE_SET_BACKGROUND, 0 },
 	{ TYPE_SET_PERSON_LEFT, 0 },
-	{ TYPE_TEXT_UNPASSABLE, "you picked right!" }
+	{ TYPE_SET_PERSON_RIGHT, 0 },
+	{ TYPE_TEXT_UNPASSABLE, "The end...?" }
 };
 
 Event *get_start_events() {

@@ -170,11 +170,15 @@ static void main_loop() {
 		if (curr_event->type != TYPE_CHOICE) { // not an if-else, because the above conditional can change the state, requiring another check
 
 			// progress one step, potentially consuming multiple events
+			curr_event++;
+
 			do {
 
-				curr_event++;
-
 				switch (curr_event->type) {
+
+					case TYPE_GOTO:
+						curr_event = curr_event->next_event;
+						break;
 
 					case TYPE_SET_PERSON_LEFT:
 
@@ -185,6 +189,8 @@ static void main_loop() {
 							tex_person_left = IMG_LoadTexture(renderer, curr_event->string);
 						else
 							tex_person_left = NULL;
+
+						curr_event++;
 						break;
 					
 					case TYPE_SET_PERSON_RIGHT:
@@ -196,6 +202,8 @@ static void main_loop() {
 							tex_person_right = IMG_LoadTexture(renderer, curr_event->string);
 						else
 							tex_person_right = NULL;
+
+						curr_event++;
 						break;
 
 					case TYPE_SET_BACKGROUND:
@@ -207,6 +215,8 @@ static void main_loop() {
 							tex_background = IMG_LoadTexture(renderer, curr_event->string);
 						else
 							tex_background = NULL;
+
+						curr_event++;
 						break;
 				}
 
