@@ -27,10 +27,27 @@ void *nk_sequence(void *unused) {
 	present();
 
 	set_text("RIGHT: same lmfao!! THAT'S SO\nCRAZY??");
+	present();
 
-	// { TYPE_CHOICE, "LEFT", pick_left },
-	// { TYPE_CHOICE, "RIGHT", pick_right },
-	// { TYPE_TEXT, "who is angrier?" },
+	add_choice("LEFT");
+	add_choice("RIGHT");
+	set_text("who is angrier?");
+	int choice = present_choices();
+
+	if (choice == 0) {
+		set_person_right("");
+		set_text("You picked LEFT!");
+	} else {
+		set_person_left("");
+		set_text("You picked RIGHT!");
+	}
+	present();
+
+	set_person_left("");
+	set_person_right("");
+	set_background("");
+	set_text("the end :)");
+	present();
 
 	return 0;
 }

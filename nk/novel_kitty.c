@@ -115,6 +115,9 @@ static int mouse_x, mouse_y;
 
 static volatile int mouse_clicked;
 
+static const char *choices[MAX_CHOICE_COUNT];
+static int choice_count;
+
 void set_person_left(const char *filepath) {
 	requested_person_left = filepath ? filepath : "";
 }
@@ -131,6 +134,11 @@ void set_text(const char *value) {
 	text = value;
 }
 
+void add_choice(const char *label) {
+	choices[choice_count] = label;
+	choice_count++;
+}
+
 void present() {
 
 	// wait until input
@@ -142,7 +150,32 @@ void present() {
 
 int present_choices() {
 
-	return 0;
+	int choice = -1;
+
+	// check which choice was selected and change the state accordingly
+	while (choice == -1) {
+
+		usleep(100000); // 0.1 seconds
+
+		if (mouse_clicked) {
+
+			for (int i = 0; i < choice_count; i++) {
+
+				if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36) {
+
+					choice = i;
+					break;
+				}
+			}
+
+			mouse_clicked = 0;
+		}
+	}
+
+	// remove all choices
+	choice_count = 0;
+
+	return choice;
 }
 
 static void main_loop() {
@@ -243,42 +276,14 @@ static void main_loop() {
 		draw_string(text, 8, 296);
 	}
 
-	// // check which choice was selected and change the state accordingly
-	// int i = 0;
+	for (int i = 0; i < choice_count; i++) {
 
-	// do {
-
-	// 	if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36) {
-
-	// 		curr_event = curr_event[i].next_event;
-	// 		break;
-	// 	}
-
-	// 	i++;
-
-	// } while (curr_event[i].type == TYPE_CHOICE);
-
-	// if (curr_event->type == TYPE_CHOICE) {
-
-	// 	int i = 0;
-
-	// 	// render all choices
-	// 	do {
-
-	// 		if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36)
-	// 			draw_texture(tex_choicebox_hovered, 16, 96 + i * 36, 0);
-	// 		else
-	// 			draw_texture(tex_choicebox, 16, 96 + i * 36, 0);
-	// 		draw_string(curr_event[i].string, 24, 104 + i * 36);
-
-	// 		i++;
-
-	// 	} while (curr_event[i].type == TYPE_CHOICE);
-
-	// 	// render text following it
-	// 	draw_texture(tex_textbox, 0, 288, 0);
-	// 	draw_string(curr_event[i].string, 8, 296);
-	// }
+		if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36)
+			draw_texture(tex_choicebox_hovered, 16, 96 + i * 36, 0);
+		else
+			draw_texture(tex_choicebox, 16, 96 + i * 36, 0);
+		draw_string(choices[i], 24, 104 + i * 36);
+	}
 
 	SDL_SetRenderTarget(renderer, NULL); 						// reset render target back to window
 	SDL_RenderCopy(renderer, screen_buffer, NULL, &letterbox); 	// render screen_buffer

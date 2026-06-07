@@ -20,6 +20,8 @@
 #ifndef NK_MAIN
 #define NK_MAIN
 
+#define MAX_CHOICE_COUNT 4
+
 // screen size
 #define WIDTH 512
 #define HEIGHT 384
@@ -34,6 +36,7 @@ void set_person_left(const char *filepath); // to clear the value, use an empty 
 void set_person_right(const char *filepath);
 void set_background(const char *filepath);
 void set_text(const char *text);
+void add_choice(const char *label);
 void present();
 int present_choices();
 
