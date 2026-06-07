@@ -51,7 +51,7 @@ static void draw_texture(SDL_Texture *tex, int x, int y, int flip) {
 
 static void draw_char(char c, int x, int y) {
 
-	SDL_Rect copy_rect = { c * CHAR_W, 0, CHAR_W, CHAR_H };
+	SDL_Rect copy_rect = { (c % 16) * CHAR_W, (c / 16) * CHAR_H, CHAR_W, CHAR_H };
 	SDL_Rect paste_rect = { x, y, CHAR_W, CHAR_H };
 
 	SDL_RenderCopyEx(renderer, tex_font, &copy_rect, &paste_rect, 0.0, NULL, SDL_FLIP_NONE);
@@ -59,43 +59,21 @@ static void draw_char(char c, int x, int y) {
 
 static void draw_string(const char *string, int x, int y) {
 
-	int dx = 0;
-	int dy = 0;
+	for (int dx = 0, dy = 0; *string != '\0'; string++) {
 
-	// draw
-	while (*string != '\0') {
-
-		if (*string == ' ') {
-			dx++;
-		} else if (*string >= 'A' && *string <= 'Z') {
-			draw_char(*string - 'A', x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
-		} else if (*string >= 'a' && *string <= 'z') {
-			draw_char(*string - 'a' + 32, x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
-		} else if (*string == '\n') {
+		if (*string == '\n') {
 			dx = 0;
-			dy++;
-		} else if (*string == ':') {
-			draw_char(26, x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
-		} else if (*string == '!') {
-			draw_char(27, x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
-		} else if (*string == '.') {
-			draw_char(28, x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
-		} else if (*string == ',') {
-			draw_char(29, x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
-		} else if (*string == '\'') {
-			draw_char(30, x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
-		} else if (*string == '?') {
-			draw_char(31, x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
+			dy += CHAR_H + LINE_VERTICAL_SPACE;
 		} else {
-			draw_char(63, x + CHAR_W * dx++, y + (CHAR_H + 2) * dy);
+			draw_char(*string, x + dx, y + dy);
+			dx += CHAR_W;
 		}
 
-		string++;
 	}
 }
 
 /*
- * functions that abstract away visual novel logic
+ * helper functions
  */
 static SDL_Event event;
 static SDL_Rect letterbox = { 0, 0, WIDTH * 2, HEIGHT * 2 };
@@ -143,7 +121,7 @@ void present() {
 
 	// wait until input
 	while (!mouse_clicked)
-		usleep(100000); // 0.1 seconds
+		usleep(INPUT_LATENCY_US);
 
 	mouse_clicked = 0;
 }
@@ -155,7 +133,7 @@ int present_choices() {
 	// check which choice was selected and change the state accordingly
 	while (choice == -1) {
 
-		usleep(100000); // 0.1 seconds
+		usleep(INPUT_LATENCY_US);
 
 		if (mouse_clicked) {
 
@@ -178,9 +156,18 @@ int present_choices() {
 	return choice;
 }
 
+/*
+ * threads
+ */
+static void *start_sequence(void *unused) {
+	sequence();
+	return NULL;
+}
+
 static void main_loop() {
 
 	// fulfill requested textures
+	// TODO instead of changing them immediately, do a bit of animation
 	if (requested_person_left) {
 
 		if (tex_person_left)
@@ -241,6 +228,7 @@ static void main_loop() {
 			mouse_y = (event.motion.y - letterbox.y) * HEIGHT / letterbox.h;
 
 		} else if (event.type == SDL_MOUSEBUTTONDOWN) {
+
 			mouse_clicked = 1;
 		}
 	}
@@ -251,6 +239,7 @@ static void main_loop() {
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); 			// clear screen_buffer to black
 	SDL_RenderClear(renderer);
 
+	// render setting
 	if (tex_background)
 		draw_texture(tex_background, 0, 0, 0);
 
@@ -270,12 +259,14 @@ static void main_loop() {
 		draw_texture(tex_person_right, WIDTH - w, HEIGHT - h, 1);
 	}
 
+	// render textbox
 	if (text) {
 
 		draw_texture(tex_textbox, 0, 288, 0);
 		draw_string(text, 8, 296);
 	}
 
+	// render all choices
 	for (int i = 0; i < choice_count; i++) {
 
 		if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36)
@@ -351,10 +342,10 @@ int main(void) {
 
 	// start program
 	pthread_t unused;
-    int result = pthread_create(&unused, NULL, nk_sequence, NULL);
+    int result = pthread_create(&unused, NULL, start_sequence, NULL);
     
     if (result) {
-        fprintf(stderr, "\x1b[31m[NovelKitty] Failed to start nk_sequence thread\n\x1b[0m");
+        fprintf(stderr, "\x1b[31m[NovelKitty] Failed to start sequence thread\n\x1b[0m");
 		return 1;
     }
 
@@ -363,15 +354,5 @@ int main(void) {
 	emscripten_set_main_loop(main_loop, 0, 1);
 
 	// this code is never reached
-
-	// SDL_DestroyTexture(tex_font);
-	// SDL_DestroyTexture(tex_textbox);
-	// SDL_DestroyTexture(tex_choicebox);
-	// SDL_DestroyTexture(tex_choicebox_hovered);
-
-	// SDL_DestroyRenderer(renderer);
-	// SDL_DestroyWindow(window);
-	// SDL_Quit();
-
 	return 0;
 }

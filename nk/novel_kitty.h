@@ -21,6 +21,7 @@
 #define NK_MAIN
 
 #define MAX_CHOICE_COUNT 4
+#define INPUT_LATENCY_US 100000
 
 // screen size
 #define WIDTH 512
@@ -30,14 +31,18 @@
 #define CHAR_W 16
 #define CHAR_H 16
 
-void *nk_sequence(void *unused);
+#define LINE_VERTICAL_SPACE 2
 
+// you gotta implement this
+void sequence();
+
+// use these in your implementation of sequence
 void set_person_left(const char *filepath); // to clear the value, use an empty string ("") or NULL
 void set_person_right(const char *filepath);
 void set_background(const char *filepath);
 void set_text(const char *text);
 void add_choice(const char *label);
-void present();
-int present_choices();
+void present(); // presents all the changes you set before it and then waits for input (you're gonna use this a lot)
+int present_choices(); // same as present, but displays choices that were added, then returns an int based on which choice was selected
 
 #endif

@@ -2,7 +2,7 @@
 
 #include "nk/novel_kitty.h"
 
-void *nk_sequence(void *unused) {
+void sequence() {
 
 	set_text("Hello!");
 	present();
@@ -48,6 +48,4 @@ void *nk_sequence(void *unused) {
 	set_background("");
 	set_text("the end :)");
 	present();
-
-	return 0;
 }
