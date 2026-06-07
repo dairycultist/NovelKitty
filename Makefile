@@ -4,8 +4,7 @@
 
 build/index.html: *.c nk/novel_kitty.c assets/*
 	mkdir -p build
-	emcc *.c nk/novel_kitty.c -o build/index.html -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]' --embed-file assets/
-	sudo chmod -R 777 build
+	emcc *.c nk/novel_kitty.c -o build/index.html -pthread -sPTHREAD_POOL_SIZE=1 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]' --embed-file assets/
 	cp nk/index.html build/index.html
 
 run: build/index.html

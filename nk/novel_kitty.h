@@ -28,32 +28,13 @@
 #define CHAR_W 16
 #define CHAR_H 16
 
-#define TYPE_NULL 0x00
-#define TYPE_TEXT 0x01
-#define TYPE_TEXT_UNPASSABLE 0x02
-#define TYPE_CHOICE 0x03
-#define TYPE_GOTO 0x04
-#define TYPE_SET_PERSON_LEFT 0x05
-#define TYPE_SET_PERSON_RIGHT 0x06
-#define TYPE_SET_BACKGROUND 0x07
+void *nk_sequence(void *unused);
 
-struct Event {
-
-	unsigned char type;
-	char *string;
-	struct Event *next_event; // for TYPE_CHOICE and TYPE_GOTO
-
-	// TODO for TYPE_CHOICE/TYPE_GOTO, encode flag stuff
-	// - the flag (boolean) requirements for it to appear as a choice to select at all
-	// - the flags it sets/unsets by using it
-
-};
-
-typedef struct Event Event;
-
-// Flags let you create situations where you're only able to reach a scene after completing other scenes first.
-// It's not insanely powerful, but it allows for stories more complex than simple dialogue trees.
-
-Event *get_start_events();
+void set_person_left(const char *filepath); // to clear the value, use an empty string ("") or NULL
+void set_person_right(const char *filepath);
+void set_background(const char *filepath);
+void set_text(const char *text);
+void present();
+int present_choices();
 
 #endif

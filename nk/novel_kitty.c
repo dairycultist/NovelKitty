@@ -20,6 +20,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <emscripten.h>
+#include <pthread.h>
+#include <unistd.h>
 
 #include "novel_kitty.h"
 
@@ -93,22 +95,99 @@ static void draw_string(const char *string, int x, int y) {
 }
 
 /*
- * emscripten main loop
+ * functions that abstract away visual novel logic
  */
 static SDL_Event event;
 static SDL_Rect letterbox = { 0, 0, WIDTH * 2, HEIGHT * 2 };
 
-static Event *curr_event;
+static const char *requested_person_left; // since threads can't perform texture operations
 static SDL_Texture *tex_person_left;
+
+static const char *requested_person_right;
 static SDL_Texture *tex_person_right;
+
+static const char *requested_background;
 static SDL_Texture *tex_background;
 
-static int mouse_x, mouse_y, mouse_clicked;
+static const char *text;
+
+static int mouse_x, mouse_y;
+
+static volatile int mouse_clicked;
+
+void set_person_left(const char *filepath) {
+	requested_person_left = filepath ? filepath : "";
+}
+
+void set_person_right(const char *filepath) {
+	requested_person_right = filepath ? filepath : "";
+}
+
+void set_background(const char *filepath) {
+	requested_background = filepath ? filepath : "";
+}
+
+void set_text(const char *value) {
+	text = value;
+}
+
+void present() {
+
+	// wait until input
+	while (!mouse_clicked)
+		usleep(100000); // 0.1 seconds
+
+	mouse_clicked = 0;
+}
+
+int present_choices() {
+
+	return 0;
+}
 
 static void main_loop() {
 
-	mouse_clicked = 0;
+	// fulfill requested textures
+	if (requested_person_left) {
 
+		if (tex_person_left)
+			SDL_DestroyTexture(tex_person_left);
+
+		if (requested_person_left[0] != '\0')
+			tex_person_left = IMG_LoadTexture(renderer, requested_person_left);
+		else
+			tex_person_left = NULL;
+
+		requested_person_left = NULL;
+	}
+
+	if (requested_person_right) {
+
+		if (tex_person_right)
+			SDL_DestroyTexture(tex_person_right);
+
+		if (requested_person_right[0] != '\0')
+			tex_person_right = IMG_LoadTexture(renderer, requested_person_right);
+		else
+			tex_person_right = NULL;
+
+		requested_person_right = NULL;
+	}
+
+	if (requested_background) {
+
+		if (tex_background)
+			SDL_DestroyTexture(tex_background);
+
+		if (requested_background[0] != '\0')
+			tex_background = IMG_LoadTexture(renderer, requested_background);
+		else
+			tex_background = NULL;
+
+		requested_background = NULL;
+	}
+
+	// get input
 	while (SDL_PollEvent(&event)) {
 
 		if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -130,8 +209,6 @@ static void main_loop() {
 
 		} else if (event.type == SDL_MOUSEBUTTONDOWN) {
 			mouse_clicked = 1;
-		} else if (event.type == SDL_MOUSEBUTTONUP) {
-			mouse_clicked = 0;
 		}
 	}
 
@@ -141,94 +218,6 @@ static void main_loop() {
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); 			// clear screen_buffer to black
 	SDL_RenderClear(renderer);
 
-	//////////////////////////////////////////////////////////////
-
-	/*
-	 * progress events with mouse click
-	 */
-	if (mouse_clicked && curr_event->type != TYPE_TEXT_UNPASSABLE) {
-
-		if (curr_event->type == TYPE_CHOICE) {
-
-			// check which choice was selected and change the state accordingly
-			int i = 0;
-
-			do {
-
-				if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36) {
-
-					curr_event = curr_event[i].next_event;
-					break;
-				}
-
-				i++;
-
-			} while (curr_event[i].type == TYPE_CHOICE);
-
-		} else {
-
-			// simply move to the next event
-			curr_event++;
-		}
-
-		if (curr_event->type != TYPE_CHOICE) {
-
-			// consume events
-			do {
-
-				switch (curr_event->type) {
-
-					case TYPE_GOTO:
-						curr_event = curr_event->next_event;
-						break;
-
-					case TYPE_SET_PERSON_LEFT:
-
-						if (tex_person_left)
-							SDL_DestroyTexture(tex_person_left);
-
-						if (curr_event->string)
-							tex_person_left = IMG_LoadTexture(renderer, curr_event->string);
-						else
-							tex_person_left = NULL;
-
-						curr_event++;
-						break;
-					
-					case TYPE_SET_PERSON_RIGHT:
-
-						if (tex_person_right)
-							SDL_DestroyTexture(tex_person_right);
-
-						if (curr_event->string)
-							tex_person_right = IMG_LoadTexture(renderer, curr_event->string);
-						else
-							tex_person_right = NULL;
-
-						curr_event++;
-						break;
-
-					case TYPE_SET_BACKGROUND:
-
-						if (tex_background)
-							SDL_DestroyTexture(tex_background);
-
-						if (curr_event->string)
-							tex_background = IMG_LoadTexture(renderer, curr_event->string);
-						else
-							tex_background = NULL;
-
-						curr_event++;
-						break;
-				}
-
-			} while (curr_event->type != TYPE_NULL && curr_event->type != TYPE_TEXT && curr_event->type != TYPE_TEXT_UNPASSABLE && curr_event->type != TYPE_CHOICE);
-		}
-	}
-
-	/*
-	 * render
-	 */
 	if (tex_background)
 		draw_texture(tex_background, 0, 0, 0);
 
@@ -248,34 +237,48 @@ static void main_loop() {
 		draw_texture(tex_person_right, WIDTH - w, HEIGHT - h, 1);
 	}
 
-	if (curr_event->type == TYPE_CHOICE) {
-
-		int i = 0;
-
-		// render all choices
-		do {
-
-			if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36)
-				draw_texture(tex_choicebox_hovered, 16, 96 + i * 36, 0);
-			else
-				draw_texture(tex_choicebox, 16, 96 + i * 36, 0);
-			draw_string(curr_event[i].string, 24, 104 + i * 36);
-
-			i++;
-
-		} while (curr_event[i].type == TYPE_CHOICE);
-
-		// render text following it
-		draw_texture(tex_textbox, 0, 288, 0);
-		draw_string(curr_event[i].string, 8, 296);
-
-	} else {
+	if (text) {
 
 		draw_texture(tex_textbox, 0, 288, 0);
-		draw_string(curr_event->string, 8, 296);
+		draw_string(text, 8, 296);
 	}
 
-	//////////////////////////////////////////////////////////////
+	// // check which choice was selected and change the state accordingly
+	// int i = 0;
+
+	// do {
+
+	// 	if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36) {
+
+	// 		curr_event = curr_event[i].next_event;
+	// 		break;
+	// 	}
+
+	// 	i++;
+
+	// } while (curr_event[i].type == TYPE_CHOICE);
+
+	// if (curr_event->type == TYPE_CHOICE) {
+
+	// 	int i = 0;
+
+	// 	// render all choices
+	// 	do {
+
+	// 		if (mouse_x >= 16 && mouse_x < 496 && mouse_y >= 96 + i * 36 && mouse_y < 128 + i * 36)
+	// 			draw_texture(tex_choicebox_hovered, 16, 96 + i * 36, 0);
+	// 		else
+	// 			draw_texture(tex_choicebox, 16, 96 + i * 36, 0);
+	// 		draw_string(curr_event[i].string, 24, 104 + i * 36);
+
+	// 		i++;
+
+	// 	} while (curr_event[i].type == TYPE_CHOICE);
+
+	// 	// render text following it
+	// 	draw_texture(tex_textbox, 0, 288, 0);
+	// 	draw_string(curr_event[i].string, 8, 296);
+	// }
 
 	SDL_SetRenderTarget(renderer, NULL); 						// reset render target back to window
 	SDL_RenderCopy(renderer, screen_buffer, NULL, &letterbox); 	// render screen_buffer
@@ -341,12 +344,17 @@ int main(void) {
 		return 1;
 	}
 
+	// start program
+	pthread_t unused;
+    int result = pthread_create(&unused, NULL, nk_sequence, NULL);
+    
+    if (result) {
+        fprintf(stderr, "\x1b[31m[NovelKitty] Failed to start nk_sequence thread\n\x1b[0m");
+		return 1;
+    }
+
 	printf("\n[NovelKitty] Good to go!\n\n");
 
-	// init
-	curr_event = get_start_events();
-
-	// start program
 	emscripten_set_main_loop(main_loop, 0, 1);
 
 	// this code is never reached
