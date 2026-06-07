@@ -59,6 +59,8 @@ static void draw_char(char c, int x, int y) {
 
 static void draw_string(const char *string, int x, int y) {
 
+	// TODO automatically insert line breaks without splitting words
+
 	for (int dx = 0, dy = 0; *string != '\0'; string++) {
 
 		if (*string == '\n') {
@@ -68,7 +70,6 @@ static void draw_string(const char *string, int x, int y) {
 			draw_char(*string, x + dx, y + dy);
 			dx += CHAR_W;
 		}
-
 	}
 }
 
@@ -262,8 +263,11 @@ static void main_loop() {
 	// render textbox
 	if (text) {
 
-		draw_texture(tex_textbox, 0, 288, 0);
-		draw_string(text, 8, 296);
+		int h;
+		SDL_QueryTexture(tex_textbox, NULL, NULL, NULL, &h);
+
+		draw_texture(tex_textbox, 0, HEIGHT - h, 0);
+		draw_string(text, CHAR_W / 2, HEIGHT - h + CHAR_H / 2);
 	}
 
 	// render all choices
