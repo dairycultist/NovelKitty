@@ -1,6 +1,6 @@
 /*
- * game_kitty.h
- * The header file of the GameKitty framework.
+ * novel_kitty.h
+ * The header file of the NovelKitty framework.
  * 
  * Copyright 2026 dairycultist
  * 
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef GK_MAIN
-#define GK_MAIN
+#ifndef NK_MAIN
+#define NK_MAIN
 
 // screen size
 #define WIDTH 512

@@ -1,6 +1,6 @@
 // This file is intentionally left unlicensed under Apache License, Version 2.0.
 
-#include "gk/game_kitty.h"
+#include "nk/novel_kitty.h"
 
 static Event the_forest[], pick_left[], pick_right[], the_end[];
 

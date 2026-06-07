@@ -2,11 +2,11 @@
 
 .PHONY: run clean
 
-build/index.html: *.c gk/game_kitty.c assets/*
+build/index.html: *.c nk/novel_kitty.c assets/*
 	mkdir -p build
-	emcc *.c gk/game_kitty.c -o build/index.html -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]' --embed-file assets/
+	emcc *.c nk/novel_kitty.c -o build/index.html -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]' --embed-file assets/
 	sudo chmod -R 777 build
-	cp gk/index.html build/index.html
+	cp nk/index.html build/index.html
 
 run: build/index.html
 	emrun build/index.html --no_browser

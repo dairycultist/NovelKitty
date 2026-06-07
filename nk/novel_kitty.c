@@ -1,6 +1,6 @@
 /*
- * game_kitty.c
- * The implementation of the GameKitty framework.
+ * novel_kitty.c
+ * The implementation of the NovelKitty framework.
  * 
  * Copyright 2026 dairycultist
  * 
@@ -21,7 +21,7 @@
 #include <SDL2/SDL_image.h>
 #include <emscripten.h>
 
-#include "game_kitty.h"
+#include "novel_kitty.h"
 
 /*
  * rendering
@@ -288,60 +288,60 @@ static void main_loop() {
 int main(void) {
 
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-		fprintf(stderr, "\x1b[31m[GameKitty] Error initializing SDL:\n%s\n\x1b[0m", SDL_GetError());
+		fprintf(stderr, "\x1b[31m[NovelKitty] Error initializing SDL:\n%s\n\x1b[0m", SDL_GetError());
 		return 1;
 	}
 
-	window = SDL_CreateWindow("GameKitty", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH * 2, HEIGHT * 2, SDL_WINDOW_RESIZABLE);
+	window = SDL_CreateWindow("NovelKitty", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH * 2, HEIGHT * 2, SDL_WINDOW_RESIZABLE);
 
 	if (!window) {
-		fprintf(stderr, "\x1b[31m[GameKitty] Error creating window:\n%s\n\x1b[0m", SDL_GetError());
+		fprintf(stderr, "\x1b[31m[NovelKitty] Error creating window:\n%s\n\x1b[0m", SDL_GetError());
 		return 1;
     }
 
 	renderer = SDL_CreateRenderer(window, -1, 0);
 
 	if (!renderer) {
-		fprintf(stderr, "\x1b[31m[GameKitty] Error creating renderer:\n%s\n\x1b[0m", SDL_GetError());
+		fprintf(stderr, "\x1b[31m[NovelKitty] Error creating renderer:\n%s\n\x1b[0m", SDL_GetError());
 		return 1;
 	}
 
 	screen_buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, WIDTH, HEIGHT);
 
 	if (!screen_buffer) {
-		fprintf(stderr, "\x1b[31m[GameKitty] Error creating screen buffer:\n%s\n\x1b[0m", SDL_GetError());
+		fprintf(stderr, "\x1b[31m[NovelKitty] Error creating screen buffer:\n%s\n\x1b[0m", SDL_GetError());
 		return 1;
 	}
 
 	tex_font = IMG_LoadTexture(renderer, "assets/font.png");
 
 	if (!tex_font) {
-		fprintf(stderr, "\x1b[31m[GameKitty] Could not read font texture\n\x1b[0m");
+		fprintf(stderr, "\x1b[31m[NovelKitty] Could not read font texture\n\x1b[0m");
 		return 1;
 	}
 
 	tex_textbox = IMG_LoadTexture(renderer, "assets/textbox.png");
 
 	if (!tex_textbox) {
-		fprintf(stderr, "\x1b[31m[GameKitty] Could not read textbox texture\n\x1b[0m");
+		fprintf(stderr, "\x1b[31m[NovelKitty] Could not read textbox texture\n\x1b[0m");
 		return 1;
 	}
 
 	tex_choicebox = IMG_LoadTexture(renderer, "assets/choicebox.png");
 
 	if (!tex_choicebox) {
-		fprintf(stderr, "\x1b[31m[GameKitty] Could not read choicebox texture\n\x1b[0m");
+		fprintf(stderr, "\x1b[31m[NovelKitty] Could not read choicebox texture\n\x1b[0m");
 		return 1;
 	}
 
 	tex_choicebox_hovered = IMG_LoadTexture(renderer, "assets/choicebox_hovered.png");
 
 	if (!tex_choicebox_hovered) {
-		fprintf(stderr, "\x1b[31m[GameKitty] Could not read hovered choicebox texture\n\x1b[0m");
+		fprintf(stderr, "\x1b[31m[NovelKitty] Could not read hovered choicebox texture\n\x1b[0m");
 		return 1;
 	}
 
-	printf("\n[GameKitty] Good to go!\n\n");
+	printf("\n[NovelKitty] Good to go!\n\n");
 
 	// init
 	curr_event = get_start_events();
